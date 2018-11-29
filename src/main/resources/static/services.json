@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Eureka",
+    "key": "eureka",
+    "port": 8761,
+    "serviceName": "center-eureka"
+  },
+  {
+    "name": "Oauth",
+    "key": "oauth",
+    "port": 12222,
+    "serviceName": "center-oauth"
+  },
+  {
+    "name": "Gateway",
+    "key": "gateway",
+    "port": 8080,
+    "serviceName": "center-gateway"
+  }
+]
