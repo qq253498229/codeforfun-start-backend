@@ -16,6 +16,7 @@ import java.util.Map;
 @Service
 public class GenerateService {
     public static final String EUREKA_PATH = "classpath:static/eureka";
+    public static final String OAUTH_PATH = "classpath:static/oauth";
     @Value("${attachment.path}")
     private String attachmentPath;
 
@@ -36,10 +37,6 @@ public class GenerateService {
         return null;
     }
 
-    public File generateOauth(Services service) {
-        return null;
-    }
-
     /**
      * 生成eureka
      */
@@ -49,7 +46,25 @@ public class GenerateService {
         File newFolder = new File(newPath + File.separator + "eureka");
         FileUtils.copyDirectory(ResourceUtils.getFile(EUREKA_PATH), newFolder);
         // 替换字符串
-        File source = replaceWords(service, newFolder);
+        File source = replaceEurekaWords(service, newFolder);
+        // 压缩目录
+        return getZip(newPath, source);
+    }
+
+    /**
+     * 生成oauth
+     */
+    public File generateOauth(Services service) throws IOException {
+        // 复制新目录
+        String newPath = attachmentPath + File.separator + System.currentTimeMillis();
+        File newFolder = new File(newPath + File.separator + "oauth");
+        FileUtils.copyDirectory(ResourceUtils.getFile(OAUTH_PATH), newFolder);
+        // 替换字符串
+        File source = replaceOauthWords(service, newFolder);
+        return getZip(newPath, source);
+    }
+
+    private File getZip(String newPath, File source) throws IOException {
         // 压缩目录
         File output = new File(attachmentPath + File.separator + System.currentTimeMillis() + ".zip");
         ZipUtil.pack(source, output);
@@ -58,10 +73,16 @@ public class GenerateService {
         return output;
     }
 
+    private File replaceOauthWords(Services service, File newFolder) throws IOException {
+        // 替换bootstrap.yml
+        replace(new File(newFolder.getPath() + File.separator + "src" + File.separator + "main" + File.separator + "resources" + File.separator + "bootstrap.yml"), service.toMap());
+        return newFolder;
+    }
+
     /**
      * 替换字符串
      */
-    private File replaceWords(Services service, File newFolder) throws IOException {
+    private File replaceEurekaWords(Services service, File newFolder) throws IOException {
         // 替换application.properties
         replace(new File(newFolder.getPath() + File.separator + "src" + File.separator + "main" + File.separator + "resources" + File.separator + "application.properties"), service.toMap());
         return newFolder;
