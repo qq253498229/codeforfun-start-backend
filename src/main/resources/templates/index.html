@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en" ng-app="app">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <link href="https://cdn.bootcss.com/twitter-bootstrap/3.3.7/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body ng-controller="ctrl" style="padding-top: 2em;">
+<div class="container">
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <h3 class="panel-title">选择服务</h3>
+        </div>
+        <div class="panel-body">
+            <form class="form-horizontal">
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label for="group" class="col-sm-2 control-label">Group</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="group" placeholder="请输入Group"
+                                       ng-model="model.group">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="artifact" class="col-sm-2 control-label">Artifact</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="artifact" placeholder="请输入Artifact"
+                                       ng-model="model.artifact">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <label for="service" class="col-sm-2 control-label">服务</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="service"
+                                       placeholder="Eureka,Hystrix 中间以逗号分割"
+                                       ng-model="inputValue" ng-change="change()" data-provide="typeahead"
+                                       data-items="4" data-source='{{options}}' my-enter="select()">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">已选</label>
+                            <div class="col-sm-10" style="padding-top: 6px;">
+                                <span class="label label-default" ng-repeat="item in list track by $index"
+                                      ng-if="item.selected" style="margin-right: 5px;">{{item.name}}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-sm-6">
+                        <div class="form-group">
+                            <div class="col-sm-offset-4 col-sm-1">
+                                <button type="submit" class="btn btn-primary" ng-click="generate()">生成</button>
+                            </div>
+                            <div class="col-sm-1">
+                                <button type="submit" class="btn btn-link" ng-click="moreFlag = !moreFlag">高级选项</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row" ng-if="moreFlag">
+                    <div class="col-sm-6" ng-repeat="item in list track by $index">
+                        <div class="form-group">
+                            <label for="{{'name' + item.key + $index}}"
+                                   class="col-sm-2 control-label">{{item.name}}</label>
+                            <div class="col-sm-10">
+                                <div class="checkbox">
+                                    <label>
+                                        <input type="checkbox" id="{{'name' + item.key + $index}}"
+                                               ng-model="item.selected">
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="{{'port' + item.key + $index}}" class="col-sm-2 control-label">端口</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="{{'port' + item.key + $index}}"
+                                       placeholder="请输入端口" ng-model="item.port">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="{{'serviceName' + item.key + $index}}"
+                                   class="col-sm-2 control-label">服务名</label>
+                            <div class="col-sm-10">
+                                <input type="text" class="form-control" id="{{'serviceName' + item.key + $index}}"
+                                       placeholder="请输入服务名" ng-model="item.serviceName">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/angular.js/1.7.5/angular.min.js"></script>
+<script src="https://cdn.bootcss.com/underscore.js/1.9.1/underscore-min.js"></script>
+<script src="https://cdn.bootcss.com/bootstrap-3-typeahead/4.0.2/bootstrap3-typeahead.min.js"></script>
+<script>
+    var app = angular.module('app', []);
+    app.directive('myEnter', function () {
+        return function (scope, elements, attrs) {
+            elements.bind("keydown keypress", function (event) {
+                // 9:tab
+                // 13:enter
+                // 188:,
+                if (event.which === 9 || event.which === 13 || event.which === 188) {
+                    scope.$apply(function () {
+                        scope.$eval(attrs.myEnter);
+                    });
+                    event.preventDefault();
+                }
+            });
+        }
+    });
+    app.controller('ctrl', ['$scope', '$http', function ($scope, $http) {
+        $scope.inputValue = '';
+
+        $scope.list = [];
+
+        $scope.options = [];
+
+        $scope.onInit = function () {
+            $scope.model = {
+                group: 'com.example',
+                artifact: 'demo'
+            };
+
+            $http.get('/api/list').then(function (res) {
+                if (res.status === 200) {
+                    $scope.list = res.data;
+                }
+                console.log($scope.list);
+                $scope.options = [];
+                _.each($scope.list, function (obj) {
+                    $scope.options.push(obj.name)
+                })
+            });
+        };
+
+        $scope.onInit();
+
+        $scope.select = function () {
+            _.each($scope.list, function (obj) {
+                if (obj.name === $scope.inputValue) {
+                    obj.selected = !obj.selected;
+                    $scope.inputValue = '';
+                }
+            });
+        };
+
+        $scope.generate = function () {
+            var selected = _.filter($scope.list, function (obj) {
+                return obj.selected === true;
+            });
+
+            if (!selected || selected.length === 0) {
+                alert('您尚未选择服务，请选择服务后再点击生成');
+                return;
+            }
+
+            $http.post('/api/generate', selected).then(function (res) {
+                if(res.status === 200){
+                    window.location.href = '/api/download/' + res.data.name;
+                }
+            })
+        }
+    }])
+</script>
+</body>
+</html>

@@ -8,6 +8,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.ModelAndView;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -30,10 +31,15 @@ public class GenerateController {
         this.generateService = generateService;
     }
 
+    @GetMapping("/")
+    public ModelAndView index() {
+        return new ModelAndView("index");
+    }
+
     /**
      * 获取服务列表
      */
-    @GetMapping("/")
+    @GetMapping("/api/list")
     public ResponseEntity serviceList() throws IOException {
         File file = ResourceUtils.getFile("classpath:static/services.json");
         ObjectMapper om = new ObjectMapper();
@@ -42,7 +48,7 @@ public class GenerateController {
         return ok(services);
     }
 
-    @PostMapping("/generate")
+    @PostMapping("/api/generate")
     public ResponseEntity generate(@RequestBody List<Services> services) throws IOException {
         File file = generateService.generate(services);
         Map<String, Object> map = new HashMap<>();
@@ -50,7 +56,7 @@ public class GenerateController {
         return ok().body(map);
     }
 
-    @GetMapping("/download/{fileName}")
+    @GetMapping("/api/download/{fileName}")
     public ResponseEntity download(@PathVariable String fileName) throws FileNotFoundException {
         File file = generateService.download(fileName);
         InputStreamResource resource = new InputStreamResource(new FileInputStream(file));
